@@ -1,0 +1,121 @@
+CREATE DATABASE SalesDB;
+USE SalesDB;
+
+CREATE TABLE Customer (
+    customer_id INT PRIMARY KEY,
+    customer_name VARCHAR(100) NOT NULL,
+    city VARCHAR(50),
+    email VARCHAR(100) UNIQUE
+);
+
+INSERT INTO Customer VALUES
+(1, 'Rohan Patil', 'Pune', 'rohan@test.com'),
+(2, 'Asha Deshmukh', 'Mumbai', 'asha@test.com'),
+(3, 'Vikram Joshi', 'Nagpur', 'vikram@test.com'),
+(4, 'Priya Kulkarni', 'Nashik', 'priya@test.com'),
+(5, 'Siddhi Sharma', 'Pune', 'siddhi@test.com');
+
+CREATE TABLE Product (
+    product_id INT PRIMARY KEY,
+    product_name VARCHAR(100),
+    category VARCHAR(50),
+    price DECIMAL(10,2) CHECK (price >= 0)
+);
+
+INSERT INTO Product VALUES
+(101, 'Smartphone', 'Electronics', 15000.00),
+(102, 'Laptop', 'Electronics', 55000.00),
+(103, 'Mixer Grinder', 'Home Appliance', 4500.00),
+(104, 'Shoes', 'Fashion', 2500.00),
+(105, 'Book', 'Stationery', 400.00);
+
+CREATE TABLE Sale (
+    sale_id INT PRIMARY KEY,
+    customer_id INT,
+    product_id INT,
+    quantity INT CHECK (quantity > 0),
+    sale_date DATE DEFAULT (CURDATE()),
+    total_amount DECIMAL(10,2),
+    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id),
+    FOREIGN KEY (product_id) REFERENCES Product(product_id)
+);
+
+INSERT INTO Sale VALUES
+(1, 1, 101, 1, '2025-10-01', 15000.00),
+(2, 2, 102, 1, '2025-10-03', 55000.00),
+(3, 3, 103, 2, '2025-10-05', 9000.00),
+(4, 4, 104, 3, '2025-10-06', 7500.00),
+(5, 5, 105, 5, '2025-10-08', 2000.00),
+(6, 1, 103, 1, '2025-10-10', 4500.00),
+(7, 2, 101, 2, '2025-10-12', 30000.00),
+(8, 3, 104, 1, '2025-10-14', 2500.00),
+(9, 4, 105, 3, '2025-10-16', 1200.00),
+(10, 5, 102, 1, '2025-10-18', 55000.00);
+
+-- A. Aggregation Operations
+
+-- 1) Total sales amount per customer
+SELECT c.customer_name, SUM(s.total_amount) AS total_sales
+FROM Customer c
+JOIN Sale s ON c.customer_id = s.customer_id
+GROUP BY c.customer_name;
+
+-- 2) Total quantity sold for each product
+SELECT p.product_name, SUM(s.quantity) AS total_quantity_sold
+FROM Product p
+JOIN Sale s ON p.product_id = s.product_id
+GROUP BY p.product_name;
+
+-- 3) Highest and lowest product prices
+SELECT MAX(price) AS Highest_Price, MIN(price) AS Lowest_Price
+FROM Product;
+
+-- 4) Average sales amount per city
+SELECT c.city, AVG(s.total_amount) AS avg_sales
+FROM Customer c
+JOIN Sale s ON c.customer_id = s.customer_id
+GROUP BY c.city;
+
+-- 5) Total sales and count of transactions per category
+SELECT p.category, SUM(s.total_amount) AS total_sales, COUNT(s.sale_id) AS total_transactions
+FROM Product p
+JOIN Sale s ON p.product_id = s.product_id
+GROUP BY p.category;
+
+-- B. Subquery Operations
+
+-- 1) Customers whose total purchase > average sales of all customers
+SELECT customer_name
+FROM Customer
+WHERE customer_id IN (
+    SELECT customer_id
+    FROM Sale
+    GROUP BY customer_id
+    HAVING SUM(total_amount) > (
+        SELECT AVG(total_amount) FROM Sale
+    )
+);
+
+-- 2) Temporary summary table showing each customer’s total sales > ₹10,000
+CREATE TEMPORARY TABLE CustomerSummary AS
+SELECT customer_id, SUM(total_amount) AS total_sales
+FROM Sale
+GROUP BY customer_id;
+
+SELECT c.customer_name, cs.total_sales
+FROM Customer c
+JOIN CustomerSummary cs ON c.customer_id = cs.customer_id
+WHERE cs.total_sales > 10000;
+
+-- 3) Each product with number of times it was sold
+SELECT p.product_name, COUNT(s.sale_id) AS times_sold
+FROM Product p
+LEFT JOIN Sale s ON p.product_id = s.product_id
+GROUP BY p.product_name;
+
+-- 4) Customers who purchased at least one product in 'Electronics'
+SELECT DISTINCT c.customer_name
+FROM Customer c
+JOIN Sale s ON c.customer_id = s.customer_id
+JOIN Product p ON s.product_id = p.product_id
+WHERE p.category = 'Electronics';
