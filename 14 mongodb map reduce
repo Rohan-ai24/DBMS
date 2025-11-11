@@ -1,0 +1,87 @@
+use SalesDB;
+
+db.createCollection("Order");
+
+db.Order.insertMany([
+  { cus_id: "A1", amount: 400, status: "P" },
+  { cus_id: "B1", amount: 300, status: "D" },
+  { cus_id: "A1", amount: 200, status: "F" },
+  { cus_id: "C1", amount: 200, status: "F" },
+  { cus_id: "B1", amount: 700, status: "P" },
+  { cus_id: "B1", amount: 800, status: "P" }
+]);
+
+var mapSumPending = function () {
+  if (this.status === "P") emit(this.cus_id, this.amount);
+};
+
+var reduceSumPending = function (key, values) {
+  return Array.sum(values);
+};
+
+db.Order.mapReduce(
+  mapSumPending,
+  reduceSumPending,
+  { out: "SumPendingAmount" }
+);
+
+db.SumPendingAmount.find();
+
+var mapAvg = function () {
+  emit(this.cus_id, { sum: this.amount, count: 1 });
+};
+
+var reduceAvg = function (key, values) {
+  var total = 0;
+  var count = 0;
+  values.forEach(function (v) {
+    total += v.sum;
+    count += v.count;
+  });
+  return { sum: total, count: count };
+};
+
+var finalizeAvg = function (key, reducedVal) {
+  reducedVal.avg = reducedVal.sum / reducedVal.count;
+  return reducedVal;
+};
+
+db.Order.mapReduce(
+  mapAvg,
+  reduceAvg,
+  { out: "AvgAmount", finalize: finalizeAvg }
+);
+
+db.AvgAmount.find();
+
+var mapMin = function () {
+  emit(this.cus_id, this.amount);
+};
+
+var reduceMin = function (key, values) {
+  return Math.min.apply(null, values);
+};
+
+db.Order.mapReduce(
+  mapMin,
+  reduceMin,
+  { out: "MinAmount" }
+);
+
+db.MinAmount.find();
+
+var mapMaxFailed = function () {
+  if (this.status === "F") emit(this.cus_id, this.amount);
+};
+
+var reduceMaxFailed = function (key, values) {
+  return Math.max.apply(null, values);
+};
+
+db.Order.mapReduce(
+  mapMaxFailed,
+  reduceMaxFailed,
+  { out: "MaxFailedAmount" }
+);
+
+db.MaxFailedAmount.find();
