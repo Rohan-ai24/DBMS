@@ -1,0 +1,108 @@
+-- Create Database
+CREATE DATABASE BankDB;
+USE BankDB;
+
+-- Create Table: Bank
+CREATE TABLE Bank (
+    bank_id INT PRIMARY KEY,
+    bank_name VARCHAR(100) NOT NULL,
+    ho_address VARCHAR(150),
+    contactno VARCHAR(15) UNIQUE
+);
+
+INSERT INTO Bank VALUES
+(1, 'SBI', 'Mumbai', '9876543210'),
+(2, 'HDFC', 'Delhi', '9876543220'),
+(3, 'ICICI', 'Pune', '9876543230'),
+(4, 'Axis', 'Nagpur', '9876543240'),
+(5, 'PNB', 'Nashik', '9876543250');
+
+-- Create Table: Branch
+CREATE TABLE Branch (
+    branch_id INT PRIMARY KEY,
+    bank_id INT,
+    branch_name VARCHAR(120) NOT NULL,
+    ifsc_code VARCHAR(15) UNIQUE,
+    city VARCHAR(50),
+    state VARCHAR(50),
+    pincode VARCHAR(10),
+    FOREIGN KEY (bank_id) REFERENCES Bank(bank_id)
+);
+
+INSERT INTO Branch VALUES
+(1, 1, 'SBI Main', 'SBI0001', 'Mumbai', 'MH', '400001'),
+(2, 2, 'HDFC City', 'HDFC0002', 'Delhi', 'DL', '110001'),
+(3, 3, 'ICICI Town', 'ICICI0003', 'Pune', 'MH', '411001'),
+(4, 4, 'Axis Plaza', 'AXIS0004', 'Nagpur', 'MH', '440001'),
+(5, 5, 'PNB Nagar', 'PNB0005', 'Nashik', 'MH', '422001');
+
+-- Create Table: Customer
+CREATE TABLE Customer (
+    customer_id INT PRIMARY KEY,
+    fname VARCHAR(50) NOT NULL,
+    mname VARCHAR(50),
+    lname VARCHAR(50),
+    gender CHAR(1) CHECK (gender IN ('M','F')),
+    dob DATE,
+    phone VARCHAR(15) UNIQUE,
+    email VARCHAR(120) UNIQUE,
+    create_on DATE DEFAULT CURRENT_DATE
+);
+
+INSERT INTO Customer VALUES
+(1, 'Rohan', 'S.', 'Patil', 'M', '2000-05-01', '9876500011', 'rohan@test.com', '2025-10-01'),
+(2, 'Priya', 'R.', 'Joshi', 'F', '2001-02-10', '9876500022', 'priya@test.com', '2025-10-02'),
+(3, 'Amit', 'K.', 'Deshmukh', 'M', '1999-08-20', '9876500033', 'amit@test.com', '2025-10-03'),
+(4, 'Sneha', 'P.', 'Sharma', 'F', '2002-01-15', '9876500044', 'sneha@test.com', '2025-10-04'),
+(5, 'Arjun', 'M.', 'Kale', 'M', '2000-11-25', '9876500055', 'arjun@test.com', '2025-10-05');
+
+-- Create Table: CustomerAccount
+CREATE TABLE CustomerAccount (
+    account_id INT PRIMARY KEY,
+    customer_id INT,
+    branch_id INT,
+    account_no VARCHAR(20) UNIQUE NOT NULL,
+    account_type VARCHAR(20) CHECK (account_type IN ('Saving','Current')),
+    balance DECIMAL(10,2) CHECK (balance >= 0),
+    status VARCHAR(10) DEFAULT 'Active',
+    open_on DATE DEFAULT CURRENT_DATE,
+    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id),
+    FOREIGN KEY (branch_id) REFERENCES Branch(branch_id)
+);
+
+INSERT INTO CustomerAccount VALUES
+(1, 1, 1, 'SB1001', 'Saving', 25000.00, 'Active', '2025-10-01'),
+(2, 2, 2, 'SB1002', 'Saving', 30000.00, 'Active', '2025-10-02'),
+(3, 3, 3, 'CA1003', 'Current', 50000.00, 'Active', '2025-10-03'),
+(4, 4, 4, 'SB1004', 'Saving', 15000.00, 'Active', '2025-10-04'),
+(5, 5, 5, 'CA1005', 'Current', 80000.00, 'Active', '2025-10-05');
+
+-- Create Index
+CREATE INDEX idx_branch_id ON CustomerAccount(branch_id);
+
+-- Sample Queries
+
+-- 1. Display customers with their account details
+SELECT c.customer_id, c.fname, c.lname, a.account_no, a.balance
+FROM Customer c
+JOIN CustomerAccount a ON c.customer_id = a.customer_id;
+
+-- 2. Update balance of a customer
+UPDATE CustomerAccount SET balance = balance + 5000 WHERE account_id = 1;
+
+-- 3. List customers having Saving accounts
+SELECT c.fname, c.lname, a.account_no
+FROM Customer c
+JOIN CustomerAccount a ON c.customer_id = a.customer_id
+WHERE a.account_type = 'Saving';
+
+-- 4. Display all branches and number of accounts in each
+SELECT b.branch_name, COUNT(a.account_id) AS total_accounts
+FROM Branch b
+LEFT JOIN CustomerAccount a ON b.branch_id = a.branch_id
+GROUP BY b.branch_name;
+
+-- 5. Show customers with balance > 20000
+SELECT fname, lname, balance FROM Customer c
+JOIN CustomerAccount a ON c.customer_id = a.customer_id
+WHERE balance > 20000;
