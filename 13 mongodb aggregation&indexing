@@ -1,0 +1,87 @@
+use LibraryDB;
+
+db.createCollection("Books");
+
+db.Books.insertMany([
+  {
+    TITLE: "mongodb basics",
+    DESCRIPTION: "Introduction to MongoDB",
+    BY: "john",
+    URL: "https://mongodb.com/basics",
+    TAGS: ["database", "nosql"],
+    LIKES: 50
+  },
+  {
+    TITLE: "advanced mongodb",
+    DESCRIPTION: "Deep dive into MongoDB",
+    BY: "john",
+    URL: "https://mongodb.com/advanced",
+    TAGS: ["database", "nosql"],
+    LIKES: 120
+  },
+  {
+    TITLE: "python guide",
+    DESCRIPTION: "Python for developers",
+    BY: "alex",
+    URL: "https://python.org/guide",
+    TAGS: ["python", "programming"],
+    LIKES: 90
+  },
+  {
+    TITLE: "data science intro",
+    DESCRIPTION: "Data analysis fundamentals",
+    BY: "john",
+    URL: "https://datascience.com/intro",
+    TAGS: ["data", "science"],
+    LIKES: 200
+  },
+  {
+    TITLE: "web dev",
+    DESCRIPTION: "Frontend and backend",
+    BY: "emma",
+    URL: "https://webdev.com/learn",
+    TAGS: ["web", "frontend", "backend"],
+    LIKES: 70
+  }
+]);
+
+db.Books.aggregate([
+  { $match: { BY: "john" } },
+  { $count: "TotalBooksByJohn" }
+]);
+
+db.Books.aggregate([
+  { $match: { BY: "john" } },
+  {
+    $group: {
+      _id: "$BY",
+      MinLikes: { $min: "$LIKES" },
+      MaxLikes: { $max: "$LIKES" }
+    }
+  }
+]);
+
+db.Books.aggregate([
+  { $match: { BY: "john" } },
+  {
+    $group: {
+      _id: "$BY",
+      AvgLikes: { $avg: "$LIKES" }
+    }
+  }
+]);
+
+db.Books.aggregate([
+  { $match: { BY: "john" } },
+  {
+    $group: {
+      _id: "$BY",
+      FirstBook: { $first: "$TITLE" },
+      LastBook: { $last: "$TITLE" }
+    }
+  }
+]);
+
+db.Books.createIndex({ BY: 1 });
+
+db.Books.find({ BY: "john" }).explain("executionStats");
