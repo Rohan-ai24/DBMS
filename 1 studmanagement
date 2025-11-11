@@ -1,0 +1,72 @@
+CREATE TABLE Student (
+    id INT PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100),
+    marks INT,
+    city VARCHAR(50),
+    department VARCHAR(50)
+);
+
+INSERT INTO Student VALUES
+(1, 'Rohan', 'rohan@gmail.com', 85, 'Pune', 'Computer Engineering'),
+(2, 'Atharva', 'atharva@gmail.com', 92, 'Nagpur', 'Information Technology'),
+(3, 'Siddhi', 'siddhi@gmail.com', 90, 'Mumbai', 'Information Technology'),
+(4, 'Preity', 'preity@gmail.com', 88, 'Nashik', 'Electronics and Telecommunication'),
+(5, 'Priyanka', 'priyanka@gmail.com', 76, 'Kolhapur', 'Mechanical Engineering'),
+(6, 'Riya', 'riya@gmail.com', 81, 'Sambhajinagar', 'Computer Engineering');
+
+CREATE TABLE Courses (
+    course_id INT PRIMARY KEY,
+    course_name VARCHAR(100),
+    credits INT
+);
+
+INSERT INTO Courses VALUES
+(101, 'Database Management System', 4),
+(102, 'Operating Systems', 3),
+(103, 'Data Structures', 4),
+(104, 'Computer Networks', 3),
+(105, 'Artificial Intelligence', 4);
+
+CREATE TABLE Enrollments (
+    enrollment_id INT PRIMARY KEY,
+    student_id INT,
+    course_id INT,
+    enrollment_date DATE,
+    grade VARCHAR(5),
+    FOREIGN KEY (student_id) REFERENCES Student(id),
+    FOREIGN KEY (course_id) REFERENCES Courses(course_id)
+);
+
+INSERT INTO Enrollments VALUES
+(1, 1, 101, '2024-07-01', 'A'),
+(2, 2, 102, '2024-07-02', 'A-'),
+(3, 3, 103, '2024-07-03', 'B+'),
+(4, 4, 104, '2024-07-04', 'A'),
+(5, 5, 105, '2024-07-05', 'B'),
+(6, 6, 101, '2024-07-06', 'A');
+
+SELECT id, name, department FROM Student;
+
+SELECT s.id, s.name, c.course_name
+FROM Student s
+JOIN Enrollments e ON s.id = e.student_id
+JOIN Courses c ON e.course_id = c.course_id
+WHERE c.course_name = 'Database Management System';
+
+UPDATE Enrollments
+SET grade = 'A+'
+WHERE student_id = 1 AND course_id = 101;
+
+SELECT s.id, s.name, s.email, s.city, s.department, e.grade, c.course_name
+FROM Student s
+JOIN Enrollments e ON s.id = e.student_id
+JOIN Courses c ON e.course_id = c.course_id
+WHERE e.grade = 'A';
+
+SELECT 
+    c.course_name,
+    COUNT(e.student_id) AS total_students
+FROM Courses c
+LEFT JOIN Enrollments e ON c.course_id = e.course_id
+GROUP BY c.course_name;
