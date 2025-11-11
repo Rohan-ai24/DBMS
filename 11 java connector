@@ -1,0 +1,156 @@
+CREATE DATABASE StudentDB;
+
+USE StudentDB;
+
+CREATE TABLE Student (
+    id INT PRIMARY KEY,
+    name VARCHAR(50),
+    email VARCHAR(100),
+    marks INT
+);
+
+INSERT INTO Student VALUES
+(1, 'Rohan', 'rohan@gmail.com', 85),
+(2, 'Priya', 'priya@gmail.com', 90),
+(3, 'Amit', 'amit@gmail.com', 78);
+
+java code 
+import java.sql.*;
+import java.util.Scanner;
+
+public class StudentDatabase {
+    // Database credentials
+    static final String URL = "jdbc:mysql://localhost:3306/StudentDB";
+    static final String USER = "root";       // your MySQL username
+    static final String PASSWORD = "root";   // your MySQL password
+
+    public static void main(String[] args) {
+        Scanner sc = new Scanner(System.in);
+        try {
+            // Load JDBC driver
+            Class.forName("com.mysql.cj.jdbc.Driver");
+
+            // Establish connection
+            Connection con = DriverManager.getConnection(URL, USER, PASSWORD);
+            System.out.println("Connected to MySQL Database Successfully!");
+
+            int choice;
+            do {
+                System.out.println("\n===== STUDENT DATABASE MENU =====");
+                System.out.println("1. Add Student");
+                System.out.println("2. View All Students");
+                System.out.println("3. Update Student Marks");
+                System.out.println("4. Delete Student");
+                System.out.println("5. Exit");
+                System.out.print("Enter your choice: ");
+                choice = sc.nextInt();
+
+                switch (choice) {
+                    case 1:
+                        addStudent(con, sc);
+                        break;
+                    case 2:
+                        viewStudents(con);
+                        break;
+                    case 3:
+                        updateStudent(con, sc);
+                        break;
+                    case 4:
+                        deleteStudent(con, sc);
+                        break;
+                    case 5:
+                        System.out.println("Exiting...");
+                        break;
+                    default:
+                        System.out.println("Invalid choice! Try again.");
+                }
+            } while (choice != 5);
+
+            con.close();
+            sc.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Add new student
+    private static void addStudent(Connection con, Scanner sc) throws SQLException {
+        System.out.print("Enter ID: ");
+        int id = sc.nextInt();
+        sc.nextLine(); // consume newline
+        System.out.print("Enter Name: ");
+        String name = sc.nextLine();
+        System.out.print("Enter Email: ");
+        String email = sc.nextLine();
+        System.out.print("Enter Marks: ");
+        int marks = sc.nextInt();
+
+        String query = "INSERT INTO Student (id, name, email, marks) VALUES (?, ?, ?, ?)";
+        PreparedStatement ps = con.prepareStatement(query);
+        ps.setInt(1, id);
+        ps.setString(2, name);
+        ps.setString(3, email);
+        ps.setInt(4, marks);
+
+        int rows = ps.executeUpdate();
+        if (rows > 0)
+            System.out.println("Student added successfully!");
+        ps.close();
+    }
+
+    // View all students
+    private static void viewStudents(Connection con) throws SQLException {
+        String query = "SELECT * FROM Student";
+        Statement st = con.createStatement();
+        ResultSet rs = st.executeQuery(query);
+
+        System.out.println("\nID\tName\t\tEmail\t\t\tMarks");
+        System.out.println("--------------------------------------------------------");
+        while (rs.next()) {
+            System.out.printf("%d\t%-10s\t%-20s\t%d\n",
+                    rs.getInt("id"),
+                    rs.getString("name"),
+                    rs.getString("email"),
+                    rs.getInt("marks"));
+        }
+        rs.close();
+        st.close();
+    }
+
+    // Update student marks
+    private static void updateStudent(Connection con, Scanner sc) throws SQLException {
+        System.out.print("Enter Student ID to update: ");
+        int id = sc.nextInt();
+        System.out.print("Enter new Marks: ");
+        int marks = sc.nextInt();
+
+        String query = "UPDATE Student SET marks = ? WHERE id = ?";
+        PreparedStatement ps = con.prepareStatement(query);
+        ps.setInt(1, marks);
+        ps.setInt(2, id);
+
+        int rows = ps.executeUpdate();
+        if (rows > 0)
+            System.out.println("Student record updated successfully!");
+        else
+            System.out.println("Student not found!");
+        ps.close();
+    }
+
+    // Delete student record
+    private static void deleteStudent(Connection con, Scanner sc) throws SQLException {
+        System.out.print("Enter Student ID to delete: ");
+        int id = sc.nextInt();
+
+        String query = "DELETE FROM Student WHERE id = ?";
+        PreparedStatement ps = con.prepareStatement(query);
+        ps.setInt(1, id);
+
+        int rows = ps.executeUpdate();
+        if (rows > 0)
+            System.out.println("Student deleted successfully!");
+        else
+            System.out.println("Student not found!");
+        ps.close();
+    }
+}
