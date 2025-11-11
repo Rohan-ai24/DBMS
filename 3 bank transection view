@@ -19,9 +19,9 @@ INSERT INTO Customer VALUES
 CREATE TABLE Account (
     AccountID INT PRIMARY KEY,
     CustomerID INT,
-    AccountType VARCHAR(20) CHECK (AccountType IN ('Saving', 'Current')),
+    AccountType ENUM('Saving','Current') NOT NULL,
     Balance DECIMAL(10,2) CHECK (Balance >= 0),
-    CreatedDate DATE DEFAULT CURRENT_DATE,
+    CreatedDate DATE DEFAULT (CURDATE()),
     FOREIGN KEY (CustomerID) REFERENCES Customer(CustomerID)
 );
 
@@ -32,24 +32,22 @@ INSERT INTO Account VALUES
 (104, 4, 'Saving', 12000.00, '2025-10-04'),
 (105, 5, 'Current', 60000.00, '2025-10-05');
 
-
-CREATE TABLE Transaction (
+CREATE TABLE Transactions (
     TransactionID INT PRIMARY KEY,
     AccountID INT,
-    TransactionType VARCHAR(10) CHECK (TransactionType IN ('Credit', 'Debit')),
-    Amount DECIMAL(10,2),
-    TransactionDate DATE DEFAULT CURRENT_DATE,
+    TransactionType ENUM('Credit','Debit') NOT NULL,
+    Amount DECIMAL(10,2) CHECK (Amount > 0),
+    TransactionDate DATE DEFAULT (CURDATE()),
     FOREIGN KEY (AccountID) REFERENCES Account(AccountID)
 );
 
-INSERT INTO Transaction VALUES
+INSERT INTO Transactions VALUES
 (1, 101, 'Credit', 5000.00, '2025-10-10'),
 (2, 102, 'Debit', 2000.00, '2025-10-12'),
 (3, 103, 'Credit', 10000.00, '2025-10-15'),
 (4, 104, 'Debit', 1500.00, '2025-10-20'),
 (5, 105, 'Credit', 8000.00, '2025-10-22');
 
--- Create a View: Customer name, Account ID, and current balance
 CREATE VIEW CustomerAccountView AS
 SELECT 
     c.Name AS CustomerName,
@@ -58,26 +56,18 @@ SELECT
 FROM Customer c
 JOIN Account a ON c.CustomerID = a.CustomerID;
 
--- Create an Index on TransactionDate
-CREATE INDEX idx_TransactionDate ON Transaction(TransactionDate);
+CREATE INDEX idx_TransactionDate ON Transactions(TransactionDate);
 
--- Sample Queries
-
--- 1. View customer name, account id, and balance
 SELECT * FROM CustomerAccountView;
 
--- 2. Display all transactions with account and customer name
 SELECT t.TransactionID, c.Name, a.AccountID, t.TransactionType, t.Amount, t.TransactionDate
-FROM Transaction t
+FROM Transactions t
 JOIN Account a ON t.AccountID = a.AccountID
 JOIN Customer c ON a.CustomerID = c.CustomerID;
 
--- 3. Update account balance after credit transaction
 UPDATE Account SET Balance = Balance + 5000 WHERE AccountID = 101;
 
--- 4. Find all debit transactions greater than 1000
-SELECT * FROM Transaction
+SELECT * FROM Transactions
 WHERE TransactionType = 'Debit' AND Amount > 1000;
 
--- 5. Show total balance of all customers
 SELECT SUM(Balance) AS TotalBankBalance FROM Account;
