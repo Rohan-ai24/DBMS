@@ -1,0 +1,69 @@
+use LibraryDB;
+
+db.createCollection("books");
+
+db.books.insertMany([
+  {
+    TITLE: "mongodb",
+    DESCRIPTION: "Introduction to MongoDB basics",
+    BY: "john",
+    URL: "https://mongodb.com/intro",
+    TAGS: ["database", "nosql", "mongodb"],
+    LIKES: 120
+  },
+  {
+    TITLE: "nosql overview",
+    DESCRIPTION: "Understanding NoSQL concepts",
+    BY: "alex",
+    URL: "https://nosql.com/overview",
+    TAGS: ["database", "nosql"],
+    LIKES: 85
+  },
+  {
+    TITLE: "python programming",
+    DESCRIPTION: "Basics of Python for data handling",
+    BY: "john",
+    URL: "https://python.org/tutorial",
+    TAGS: ["programming", "python"],
+    LIKES: 50
+  },
+  {
+    TITLE: "web development",
+    DESCRIPTION: "Frontend and backend guide",
+    BY: "emma",
+    URL: "https://webdev.com/guide",
+    TAGS: ["web", "frontend", "backend"],
+    LIKES: 15
+  },
+  {
+    TITLE: "data science",
+    DESCRIPTION: "Data analysis with Python and R",
+    BY: "john",
+    URL: "https://datascience.com/start",
+    TAGS: ["data", "science", "ml"],
+    LIKES: 200
+  }
+]);
+
+db.books.insertOne({
+  TITLE: "machine learning",
+  DESCRIPTION: "Getting started with ML",
+  BY: "alice",
+  URL: "https://ml.com/start",
+  TAGS: ["ai", "ml", "data"],
+  LIKES: 90,
+  USERNAME: "rohan",
+  COMMENTS: "Very helpful for beginners!"
+});
+
+db.books.find().pretty();
+db.books.find({ TITLE: "mongodb" }).pretty();
+db.books.find({ $or: [{ BY: "john" }, { TITLE: "mongodb" }] }).pretty();
+db.books.find({ $and: [{ TITLE: "mongodb" }, { BY: "john" }] }).pretty();
+db.books.find({ LIKES: { $gt: 10 } }).pretty();
+db.books.find({ LIKES: { $gt: 100 }, $or: [{ TITLE: "mongodb" }, { BY: "john" }] }).pretty();
+db.books.updateOne({ TITLE: "mongodb" }, { $set: { TITLE: "mongodb overview" } });
+db.books.deleteOne({ TITLE: "nosql overview" });
+db.books.find({ BY: "john" }).limit(2).pretty();
+db.books.find({ BY: "john" }).skip(1).limit(1).pretty();
+db.books.find().sort({ TITLE: 1 }).pretty();
